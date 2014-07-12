@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.tenjava.entries.jimuskin.t1.listeners.PlayerServerListener;
 import com.tenjava.entries.jimuskin.t1.managers.SpawnManager;
 import com.tenjava.entries.jimuskin.t1.timer.CountdownTimer;
 import com.tenjava.entries.jimuskin.t1.timer.ReadyupTimer;
@@ -36,9 +37,11 @@ public class TenJava extends JavaPlugin{
 		this.saveDefaultConfig();
 		
 		this.spawnManager = new SpawnManager(this);
-		
 		this.countdown = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new CountdownTimer(this), 0, 20L);
 		this.stage = Stages.LOBBY;
+		
+		
+		Bukkit.getServer().getPluginManager().registerEvents(new PlayerServerListener(this), this);
 		
 		this.initiateLobby();
 	}
@@ -81,6 +84,8 @@ public class TenJava extends JavaPlugin{
 		
 		for(Player p : Bukkit.getOnlinePlayers()){
 			p.teleport(this.spawnManager.getRandomSpawn(this.map));
+			p.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "You are currently playing on the map " 
+					+ ChatColor.GOLD + this.map);
 		}
 		this.stage = Stages.READY;
 		Bukkit.getServer().getScheduler().cancelTask(countdown);
@@ -112,12 +117,19 @@ public class TenJava extends JavaPlugin{
 	}
 	
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
+		if(!(sender instanceof Player)){
+			sender.sendMessage(ChatColor.RED + "You must be a player to perform any of these commands.");
+			return true;
+		}
+		
 		Player player = (Player) sender;
-			if(label.contains("setspawn")){
-				this.spawnManager.addSpawn("Map1", player.getLocation());
-				sender.sendMessage("Added spawn");
+		
+		Commands commands = new Commands(this);
+			if(label.equalsIgnoreCase("setspawn")){
+				commands.addSpawn(player, args);
 			}
-			if(label.contains("start")){
+			if(label.equalsIgnoreCase("start")){
+				commands.startGame(player, args);
 				if(!this.readyup()) sender.sendMessage("Not enough players.");
 			}
 			
