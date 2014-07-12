@@ -24,7 +24,11 @@ public class TenJava extends JavaPlugin {
 	//The timers
 	private int countdown;
 	
+	
+	//Location for the lobby.
 	public Location lobby;
+	
+	
 	
 	public void onEnable(){
 		this.saveDefaultConfig();
@@ -36,6 +40,7 @@ public class TenJava extends JavaPlugin {
 	public void onDisable(){
 		
 	}
+	
 	private void initiateLobby(){
 		
 		World world = Bukkit.getWorld("world");
@@ -60,14 +65,13 @@ public class TenJava extends JavaPlugin {
 		}
 	}
 	
-	
 	public boolean start(){
 		if(Bukkit.getOnlinePlayers().length < 4){
 			return false;
 		}
 		
 		for(Player p : Bukkit.getOnlinePlayers()){
-			GamePlayer player = TenJava.getGamePlayer(p.getUniqueId());
+			p.teleport();
 		}
 		
 		this.ingame = true;
