@@ -1,44 +1,50 @@
 package com.tenjava.entries.jimuskin.t1;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.tenjava.entries.jimuskin.t1.managers.SpawnManager;
 import com.tenjava.entries.jimuskin.t1.timer.CountdownTimer;
+import com.tenjava.entries.jimuskin.t1.timer.ReadyupTimer;
 
-public class TenJava extends JavaPlugin {
-	
-	//Storing all the custom instances of players in here, so I have access to them later.
-	private static Map<UUID, GamePlayer> GamePlayers = new HashMap<UUID, GamePlayer>();
+public class TenJava extends JavaPlugin{
 	
 	//Some game variables
 	public int countdownTimer = 60;
-	public boolean ingame = false;
+	public int readyupTimer = 5;
+	public Stages stage;
+	public String map = "";
 	
 	//The timers
 	private int countdown;
-	
+	private int readyup;
 	
 	//Location for the lobby.
 	public Location lobby;
 	
+	//Some of the other classes. To be initialized.
+	public SpawnManager spawnManager;
 	
 	
 	public void onEnable(){
 		this.saveDefaultConfig();
+		
+		this.spawnManager = new SpawnManager(this);
+		
 		this.countdown = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new CountdownTimer(this), 0, 20L);
+		this.stage = Stages.LOBBY;
 		
 		this.initiateLobby();
 	}
 	
 	public void onDisable(){
-		
+		this.spawnManager.saveSpawns();
 	}
 	
 	private void initiateLobby(){
@@ -65,28 +71,56 @@ public class TenJava extends JavaPlugin {
 		}
 	}
 	
-	public boolean start(){
-		if(Bukkit.getOnlinePlayers().length < 4){
+	//Let everyone take their positions on the mark.
+	public boolean readyup(){
+		if(Bukkit.getOnlinePlayers().length < 2){
 			return false;
 		}
 		
-		for(Player p : Bukkit.getOnlinePlayers()){
-			p.teleport();
-		}
+		this.map = this.spawnManager.loadRandomMap();
 		
-		this.ingame = true;
+		for(Player p : Bukkit.getOnlinePlayers()){
+			p.teleport(this.spawnManager.getRandomSpawn(this.map));
+		}
+		this.stage = Stages.READY;
+		Bukkit.getServer().getScheduler().cancelTask(countdown);
+		this.readyupTimer = 5;
+		this.readyup = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new ReadyupTimer(this), 0, 20L);
 		return true;
 	}
 	
-	/*@Param player the player*/
-	public static void addGamePlayer(GamePlayer player){
-		GamePlayers.put(player.getPlayer().getUniqueId(), player);
+	public void start(){
+		this.stage = Stages.GAME;
+		Bukkit.getServer().getScheduler().cancelTask(readyup);
+		for(Player player : Bukkit.getOnlinePlayers()){
+			player.setWalkSpeed(player.getWalkSpeed() * 2);
+		}
 	}
 	
-	public static GamePlayer getGamePlayer(UUID id){
-		if(GamePlayers.containsKey(id)){
-			return GamePlayers.get(id);
+	public void end(Player player){
+		this.stage = Stages.LOBBY;
+		this.countdownTimer = 60;
+		
+		this.countdown = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new CountdownTimer(this), 0, 20L);
+		
+		Bukkit.getServer().broadcastMessage(ChatColor.GREEN + player.getName() + " has won the race!"); 
+		
+		for(Player p : Bukkit.getOnlinePlayers()){
+			p.setWalkSpeed(0.2F);
+			p.teleport(lobby);
 		}
-		return null;
 	}
+	
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
+		Player player = (Player) sender;
+			if(label.contains("setspawn")){
+				this.spawnManager.addSpawn("Map1", player.getLocation());
+				sender.sendMessage("Added spawn");
+			}
+			if(label.contains("start")){
+				if(!this.readyup()) sender.sendMessage("Not enough players.");
+			}
+			
+			return true;
+		}
 }
