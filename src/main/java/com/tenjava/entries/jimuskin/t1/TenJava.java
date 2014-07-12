@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.tenjava.entries.jimuskin.t1.listeners.GameListeners;
 import com.tenjava.entries.jimuskin.t1.listeners.PlayerServerListener;
 import com.tenjava.entries.jimuskin.t1.managers.SpawnManager;
 import com.tenjava.entries.jimuskin.t1.timer.CountdownTimer;
@@ -42,6 +43,7 @@ public class TenJava extends JavaPlugin{
 		
 		
 		Bukkit.getServer().getPluginManager().registerEvents(new PlayerServerListener(this), this);
+		Bukkit.getServer().getPluginManager().registerEvents(new GameListeners(this), this);
 		
 		this.initiateLobby();
 	}
@@ -81,13 +83,13 @@ public class TenJava extends JavaPlugin{
 		}
 		
 		this.map = this.spawnManager.loadRandomMap();
+		this.stage = Stages.READY;
 		
 		for(Player p : Bukkit.getOnlinePlayers()){
 			p.teleport(this.spawnManager.getRandomSpawn(this.map));
 			p.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "You are currently playing on the map " 
 					+ ChatColor.GOLD + this.map);
 		}
-		this.stage = Stages.READY;
 		Bukkit.getServer().getScheduler().cancelTask(countdown);
 		this.readyupTimer = 5;
 		this.readyup = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new ReadyupTimer(this), 0, 20L);
@@ -98,7 +100,7 @@ public class TenJava extends JavaPlugin{
 		this.stage = Stages.GAME;
 		Bukkit.getServer().getScheduler().cancelTask(readyup);
 		for(Player player : Bukkit.getOnlinePlayers()){
-			player.setWalkSpeed(player.getWalkSpeed() * 2);
+			player.setWalkSpeed(0.4F);
 		}
 	}
 	

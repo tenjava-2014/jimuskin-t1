@@ -16,7 +16,7 @@ public class ReadyupTimer implements Runnable{
 
 	@Override
 	public void run() {
-		if(this.plugin.readyupTimer <= 0){
+		if(this.plugin.readyupTimer == 0){
 			this.plugin.start();
 		}else{
 			this.plugin.readyupTimer--;
