@@ -1,0 +1,13 @@
+spawn: world,0,0,0
+
+maps:
+  - Map1
+  - Map2
+
+Map1:
+  - world,0,5,0
+  - world,1,5,3
+
+Map2:
+  - world,0,5,0
+  - world,1,5,3
