@@ -1,3 +1,8 @@
 name: jimuskin-t1
 main: com.tenjava.entries.jimuskin.t1.TenJava
 version: '${project.version}'
+
+
+commands:
+  setspawn:
+  start:
